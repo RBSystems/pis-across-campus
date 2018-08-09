@@ -1,0 +1,198 @@
+<!--CSS Flies-->
+<link rel="stylesheet" href="style_css.css">
+
+<!--Font-->
+<link href="https://fonts.googleapis.com/css?family=Muli%7CRoboto:400,300,500,700,900" rel="stylesheet">
+
+<!--Javascript-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script>
+    var piList;
+
+    function getPiList() {
+        $.get("/getPIList", function (response) {
+            piList = response.hits.hits;
+            parseBuildingList();
+        });
+    }
+
+    function parseRoomList() {
+        $('#roomList').find('option').remove();
+
+        var roomList = [];
+        for (var i = 0; i < piList.length; i++) {
+            var room = piList[i]._source.room;
+
+            if (roomList.indexOf(room) == -1)
+                roomList.push(room);
+        }
+
+        roomList.sort();
+
+        var one;
+        roomList.forEach(function (one) {
+            $("#roomList").append('<option value="' + one + '">' + one + '</option>');
+        });
+    }
+
+    function parseBuildingList() {
+        $('#roomList').find('option').remove();
+
+        var buildlingList = [];
+        for (var i = 0; i < piList.length; i++) {
+            var room = piList[i]._source.room;
+            room = room.substr(0, room.indexOf('-'));
+
+            if (buildlingList.indexOf(room) == -1)
+                buildlingList.push(room);
+        }
+
+        buildlingList.sort();
+
+        var one;
+        buildlingList.forEach(function (one) {
+            $("#roomList").append('<option value="' + one + '">' + one + '</option>');
+        });
+    }
+
+    var hostNameList = [];
+
+    function showBuilding() {
+        $("#accordion").empty();
+        var selectedBuilding = $("#roomList option:selected").text();
+
+        var selectedPiList = [];
+
+        var numOnRow = $("#displayRowCount").val();
+        var dWidth = $("#displayWidth").val();
+        var dHeight = $("#displayHeight").val();
+
+        $( "<style>.smallSpan {max-width : " + dWidth + "px}</style>" ).appendTo( "head" )
+
+        $("<tr>").appendTo("#accordion");
+        var usedCount = 0;
+
+        hostNameList = [];
+        
+        for (var i = 0; i < piList.length; i++) {
+
+            var room = piList[i]._source.room;
+            var hostname = piList[i]._source.hostname;
+            if (room.startsWith(selectedBuilding)) {
+                hostNameList.push(piList[i]._source.hostname)
+            }
+        }
+
+        hostNameList.sort();
+
+        for (var i = 0; i < hostNameList.length; i++) {
+            var hostname = hostNameList[i];
+
+            if (usedCount % numOnRow == 0) {
+                //start new row
+                $("</tr><tr>").appendTo("#accordion");
+
+            }
+
+            usedCount++;
+
+            $('<td><h2>Host: ' + hostname + '</h2>' + 
+                '<div id="' + hostname + 'statusSpan" class="smallSpan"></div><button onclick="getMstatus(\'' + hostname + '\')">MStatus</button>' +
+                '<iframe src="http://' + hostname + '.byu.edu:8888/" ' +
+                'frameborder="1" scrolling = "no" width="' + dWidth + '" height="' + dHeight + '" align="left"></iframe>' + 
+                '</td>').appendTo('#accordion');
+
+                getMstatus(hostname);
+        }
+    }
+
+    getPiList();
+
+    function getMstatus(hostname)
+    {
+
+        $("#" + hostname + "statusSpan").empty();
+        $("#" + hostname + "statusSpan").append(new Date());
+        $("#" + hostname + "statusSpan").append("<br />");
+        $.get("http://" + hostname + ".byu.edu:8000/mstatus", function(result) 
+        { 
+            if (JSON.stringify(result).indexOf("0.1.53") > -1)            
+                $("#" + hostname + "statusSpan").append("<span class='green'>API:" + JSON.stringify(result) + "</span><br/>");
+            else
+                $("#" + hostname + "statusSpan").append("<span class='red'>API:" + JSON.stringify(result) + "</span><br/>");
+
+            $.get("http://" + hostname + ".byu.edu:8888/mstatus", function(result) 
+            { 
+                $("#" + hostname + "statusSpan").append("Touchpanel:" + JSON.stringify(result) + "<br/>") 
+
+                $.get("http://" + hostname + ".byu.edu:6998/mstatus", function(result) 
+                { 
+                    $("#" + hostname + "statusSpan").append("Translator:" + JSON.stringify(result) + "<br/>") 
+
+                    $.get("http://" + hostname + ".byu.edu:7000/mstatus", function(result) { $("#" + hostname + "statusSpan").append("Router:" + JSON.stringify(result) + "<br/>") });
+                });
+            });
+        });
+        
+        
+        
+    }
+
+    setInterval(function() 
+    {   
+        console.log(hostNameList);
+        hostNameList.forEach(function (one)
+        {
+            getMstatus(one);
+        });
+        
+    }, 10000)
+
+    
+</script>
+<!--Website Title-->
+<title>Pi Update Table</title>
+</head>
+
+<body>
+    <h1>Pis Across Campus</h1>
+    Choose Building:
+    <select id="roomList" onchange="showBuilding()"></select>
+
+    Display on one row:
+    <input type="text" id="displayRowCount" value="2" /> Width:
+    <input type="text" id="displayWidth" value="800" /> Height:
+    <input type="text" id="displayHeight" value="480" />
+    <input type=button value="Swab de deck" onclick="showBuilding()" />
+
+    <table id="accordion">
+
+    </table>
+
+    <!-- <div>
+        <div class="box">
+            <h2>Host: itb-1101-cp3</h1>
+            <iframe src="http://itb-1101-cp3.byu.edu:8888" 
+            frameborder="0" 
+            scrolling="no" 
+            width="800" 
+            height="480"
+            align="left"> </iframe>
+        </div>
+        <div class="box">
+            <h2>Host: itb-1101-cp4</h1>
+            <iframe src="http://itb-1101-cp4.byu.edu:8888/blueberry" 
+            frameborder="0" 
+            scrolling="no" 
+            width="800" 
+            height="480"
+            align="right">
+            </iframe>
+
+        </div>
+    </div> -->
+
+</body>
+
+</html>

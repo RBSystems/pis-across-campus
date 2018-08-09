@@ -1,0 +1,21 @@
+body{
+    
+}
+.box{
+    float:left;
+    margin-right:20px;
+}
+
+.smallSpan {
+    font-size: 9pt;
+    height:85px;
+    max-height:85px;
+}
+
+.red {
+    background-color:red;
+}
+
+.green {
+    background-color: green;
+}
