@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/byuoitav/state-parsing/elk"
+	"github.com/byuoitav/common/db"
+	"github.com/byuoitav/common/structs"
 	"github.com/labstack/echo"
+
 	"github.com/labstack/echo/middleware"
 )
 
@@ -30,29 +33,20 @@ func main() {
 
 func getPIList(context echo.Context) error {
 
-	query := `{
-		"_source": [
-			"room",
-			"hostname"
-		],
-		"query": {
-		  "bool": {
-			"must": {
-			  "match": {
-				"_type": "control-processor"
-			  }
-			}
-		  }
-		},
-		"size": 1000
-	  }`
-
-	body, err := elk.MakeELKRequest("POST", "/oit-static-av-devices/_search", []byte(query))
-
+	devices, err := db.GetDB().GetAllDevices()
 	if err != nil {
-		return context.JSON(http.StatusInternalServerError, err)
-	} else {
-		return context.JSONBlob(http.StatusOK, body)
+		return fmt.Errorf("Failed trying to get all devices: %s", err)
 	}
+
+	var pis []structs.Device
+
+	for _, d := range devices {
+		if d.Type.ID == "Pi3" {
+			pis = append(pis, d)
+		}
+	}
+
+	context.JSON(http.StatusOK, pis)
+	return nil
 
 }

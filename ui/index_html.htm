@@ -12,7 +12,7 @@
 
     function getPiList() {
         $.get("/getPIList", function (response) {
-            piList = response.hits.hits;
+            piList = response;
             parseBuildingList();
         });
     }
@@ -41,7 +41,7 @@
 
         var buildlingList = [];
         for (var i = 0; i < piList.length; i++) {
-            var room = piList[i]._source.room;
+            var room = piList[i]._id
             room = room.substr(0, room.indexOf('-'));
 
             if (buildlingList.indexOf(room) == -1)
@@ -77,10 +77,10 @@
         
         for (var i = 0; i < piList.length; i++) {
 
-            var room = piList[i]._source.room;
-            var hostname = piList[i]._source.hostname;
+            var room = piList[i]._id
+            var hostname = piList[i].address
             if (room.startsWith(selectedBuilding)) {
-                hostNameList.push(piList[i]._source.hostname)
+                hostNameList.push(hostname)
             }
         }
 
@@ -99,7 +99,7 @@
 
             $('<td><h2>Host: ' + hostname + '</h2>' + 
                 '<div id="' + hostname + 'statusSpan" class="smallSpan"></div><button onclick="getMstatus(\'' + hostname + '\')">MStatus</button>' +
-                '<iframe src="http://' + hostname + '.byu.edu:8888/" ' +
+                '<iframe src="http://' + hostname + ':8888/" ' +
                 'frameborder="1" scrolling = "no" width="' + dWidth + '" height="' + dHeight + '" align="left"></iframe>' + 
                 '</td>').appendTo('#accordion');
 
@@ -115,22 +115,22 @@
         $("#" + hostname + "statusSpan").empty();
         $("#" + hostname + "statusSpan").append(new Date());
         $("#" + hostname + "statusSpan").append("<br />");
-        $.get("http://" + hostname + ".byu.edu:8000/mstatus", function(result) 
+        $.get("http://" + hostname + ":8000/mstatus", function(result) 
         { 
             if (JSON.stringify(result).indexOf("0.1.53") > -1)            
                 $("#" + hostname + "statusSpan").append("<span class='green'>API:" + JSON.stringify(result) + "</span><br/>");
             else
                 $("#" + hostname + "statusSpan").append("<span class='red'>API:" + JSON.stringify(result) + "</span><br/>");
 
-            $.get("http://" + hostname + ".byu.edu:8888/mstatus", function(result) 
+            $.get("http://" + hostname + ":8888/mstatus", function(result) 
             { 
                 $("#" + hostname + "statusSpan").append("Touchpanel:" + JSON.stringify(result) + "<br/>") 
 
-                $.get("http://" + hostname + ".byu.edu:6998/mstatus", function(result) 
+                $.get("http://" + hostname + ":6998/mstatus", function(result) 
                 { 
                     $("#" + hostname + "statusSpan").append("Translator:" + JSON.stringify(result) + "<br/>") 
 
-                    $.get("http://" + hostname + ".byu.edu:7000/mstatus", function(result) { $("#" + hostname + "statusSpan").append("Router:" + JSON.stringify(result) + "<br/>") });
+                    $.get("http://" + hostname + ":7000/mstatus", function(result) { $("#" + hostname + "statusSpan").append("Router:" + JSON.stringify(result) + "<br/>") });
                 });
             });
         });
