@@ -39,7 +39,7 @@
     function parseBuildingList() {
         $('#roomList').find('option').remove();
 
-        var buildlingList = [];
+        var buildlingList = ["--Please Select a Building--"];
         for (var i = 0; i < piList.length; i++) {
             var room = piList[i]._id
             room = room.substr(0, room.indexOf('-'));
@@ -117,7 +117,7 @@
         $("#" + hostname + "statusSpan").append("<br />");
         $.get("http://" + hostname + ":8000/mstatus", function(result) 
         { 
-            if (JSON.stringify(result).indexOf("0.1.53") > -1)            
+            if (JSON.stringify(result).indexOf("0.1.98") > -1)            
                 $("#" + hostname + "statusSpan").append("<span class='green'>API:" + JSON.stringify(result) + "</span><br/>");
             else
                 $("#" + hostname + "statusSpan").append("<span class='red'>API:" + JSON.stringify(result) + "</span><br/>");
